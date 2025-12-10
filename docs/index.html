@@ -810,6 +810,147 @@
             opacity: 1;
         }
 
+        /* PIN Modal */
+        .pin-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(4px);
+        }
+
+        .pin-overlay.visible {
+            display: flex;
+        }
+
+        .pin-modal {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+            animation: scaleIn 0.2s ease-out;
+        }
+
+        .pin-modal h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+
+        .pin-modal p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-input-container {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-digit {
+            width: 48px;
+            height: 56px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-deep);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        .pin-digit:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .pin-digit.error {
+            border-color: #c97a7a;
+            animation: shake 0.4s ease;
+        }
+
+        .pin-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .pin-actions button {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            padding: 0.7rem 1.25rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pin-submit {
+            background: rgba(201, 162, 39, 0.15);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+
+        .pin-submit:hover {
+            background: rgba(201, 162, 39, 0.25);
+        }
+
+        .pin-cancel {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-muted);
+        }
+
+        .pin-cancel:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-primary);
+        }
+
+        .pin-error-msg {
+            color: #c97a7a;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            min-height: 1.2em;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Change PIN button in settings */
+        .btn-change-pin {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            padding: 0.6rem 1.25rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-change-pin:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-primary);
+        }
+
         /* Animations */
         @keyframes fadeUp {
             from {
@@ -1093,6 +1234,26 @@
         </div>
     </div>
 
+    <!-- PIN Modal -->
+    <div class="pin-overlay" id="pinOverlay">
+        <div class="pin-modal">
+            <h3 id="pinTitle">Enter PIN</h3>
+            <p id="pinSubtitle">Enter your 5-digit PIN to access the observer panel</p>
+            <div class="pin-error-msg" id="pinError"></div>
+            <div class="pin-input-container">
+                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="0">
+                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1">
+                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2">
+                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3">
+                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="4">
+            </div>
+            <div class="pin-actions">
+                <button class="pin-cancel" onclick="closePinModal()">Cancel</button>
+                <button class="pin-submit" id="pinSubmitBtn" onclick="submitPin()">Unlock</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // STUDY CONFIGURATION
@@ -1240,6 +1401,122 @@
                 }, 2000);
             }
         }
+
+        // ============================================
+        // PIN PROTECTION
+        // ============================================
+
+        // Hardcoded PIN hash (demo PIN: 06902)
+        const ADMIN_PIN_HASH = '1adcaa9c';
+
+        // Simple hash function for PIN
+        function hashPin(pin) {
+            let hash = 0;
+            const salt = 'doorStudySalt2024';
+            const str = pin + salt;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString(16);
+        }
+
+        function verifyPin(pin) {
+            return hashPin(pin) === ADMIN_PIN_HASH;
+        }
+
+        function openPinModal() {
+            const overlay = document.getElementById('pinOverlay');
+            
+            // Clear inputs and error
+            document.querySelectorAll('.pin-digit').forEach(input => {
+                input.value = '';
+                input.classList.remove('error');
+            });
+            document.getElementById('pinError').textContent = '';
+            
+            overlay.classList.add('visible');
+            document.querySelector('.pin-digit[data-index="0"]').focus();
+        }
+
+        function closePinModal() {
+            document.getElementById('pinOverlay').classList.remove('visible');
+        }
+
+        function getEnteredPin() {
+            let pin = '';
+            document.querySelectorAll('.pin-digit').forEach(input => {
+                pin += input.value;
+            });
+            return pin;
+        }
+
+        function clearPinInputs() {
+            document.querySelectorAll('.pin-digit').forEach(input => {
+                input.value = '';
+            });
+            document.querySelector('.pin-digit[data-index="0"]').focus();
+        }
+
+        function showPinError(message) {
+            document.getElementById('pinError').textContent = message;
+            document.querySelectorAll('.pin-digit').forEach(input => {
+                input.classList.add('error');
+            });
+            setTimeout(() => {
+                document.querySelectorAll('.pin-digit').forEach(input => {
+                    input.classList.remove('error');
+                });
+            }, 400);
+        }
+
+        function submitPin() {
+            const pin = getEnteredPin();
+            
+            if (pin.length !== 5) {
+                showPinError('Please enter all 5 digits');
+                return;
+            }
+            
+            if (verifyPin(pin)) {
+                closePinModal();
+                adminVisible = true;
+                document.getElementById('adminPanel').classList.add('visible');
+            } else {
+                showPinError('Incorrect PIN');
+                clearPinInputs();
+            }
+        }
+
+        // PIN input navigation
+        document.querySelectorAll('.pin-digit').forEach((input, index, inputs) => {
+            input.addEventListener('input', (e) => {
+                // Only allow digits
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                
+                // Auto-advance to next input
+                if (e.target.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                // Handle backspace - go to previous input
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+                // Handle Enter - submit
+                if (e.key === 'Enter') {
+                    submitPin();
+                }
+            });
+            
+            // Select all on focus for easy re-entry
+            input.addEventListener('focus', (e) => {
+                e.target.select();
+            });
+        });
 
         // ============================================
         // STUDY DATA STRUCTURE
@@ -1440,8 +1717,12 @@
         let adminVisible = false;
 
         function toggleAdmin() {
-            adminVisible = !adminVisible;
-            document.getElementById('adminPanel').classList.toggle('visible', adminVisible);
+            if (adminVisible) {
+                adminVisible = false;
+                document.getElementById('adminPanel').classList.remove('visible');
+            } else {
+                openPinModal();
+            }
         }
 
         function exportCSV() {
