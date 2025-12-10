@@ -1,4 +1,4 @@
-const CACHE_NAME = 'door-study-v1';
+const CACHE_NAME = 'door-study-v3';
 const ASSETS = [
   './',
   './index.html',
