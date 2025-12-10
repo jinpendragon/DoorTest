@@ -1,0 +1,18 @@
+{
+  "name": "Door Selection Study",
+  "short_name": "Door Study",
+  "description": "A research tool for door selection studies",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230a0a0f' width='100' height='100' rx='20'/><rect fill='%231a1a2e' x='15' y='10' width='30' height='55' rx='15'/><rect fill='%231a1a2e' x='55' y='10' width='30' height='55' rx='15'/><circle fill='%23c9a227' cx='38' cy='40' r='3'/><circle fill='%23c9a227' cx='78' cy='40' r='3'/><text x='50' y='85' text-anchor='middle' fill='%23e8e6e3' font-size='12' font-family='sans-serif'>STUDY</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
